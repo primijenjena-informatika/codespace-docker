@@ -38,7 +38,7 @@ RUN curl --location https://raw.githubusercontent.com/tj/n/master/bin/n --output
 
 # Install Node.js packages
 RUN npm install --global \
-    http-server
+    http-server vite
 
 
 # Patch index.js in http-server
@@ -75,38 +75,51 @@ RUN cd /tmp && \
     ln --relative --symbolic /usr/local/bin/python3 /usr/local/bin/python && \
     pip3 install --no-cache-dir --upgrade pip
 
+# Install Go 1.23.x
+RUN cd /tmp && \
+    curl --remote-name https://go.dev/dl/go1.23.0.linux-amd64.tar.gz && \
+    tar xzf go1.23.0.linux-amd64.tar.gz && \
+    rm --force go1.23.0.linux-amd64.tar.gz && \
+    mv go /opt/go && \
+    mkdir --parent /opt/bin && \
+    ln --symbolic /opt/go/bin/* /opt/bin/ && \
+    chmod a+rx /opt/bin/*
 
-# Install Ruby 3.3.x
-# https://www.ruby-lang.org/en/downloads/
-# https://bugs.ruby-lang.org/issues/20085#note-5
-RUN apt update && \
-    apt install --no-install-recommends --no-install-suggests --yes \
-        autoconf \
-        libyaml-dev && \
-    apt clean && \
-    rm --force --recursive /var/lib/apt/lists/* && \
-    cd /tmp && \
-    curl https://cache.ruby-lang.org/pub/ruby/3.3/ruby-3.3.3.tar.gz --output ruby-3.3.3.tar.gz && \
-    tar xzf ruby-3.3.3.tar.gz && \
-    rm --force ruby-3.3.3.tar.gz && \
-    cd ruby-3.3.3 && \
-    if [ "$BUILDARCH" = "arm64" ]; then ASFLAGS=-mbranch-protection=pac-ret; else ASFLAGS=; fi && \
-    ASFLAGS=${ASFLAGS} CFLAGS=-Os ./configure --disable-install-doc --enable-load-relative && \
-    make && \
-    make install && \
-    cd .. && \
-    rm --force --recursive ruby-3.3.3
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 
-# Install Ruby packages
-RUN echo "gem: --no-document" > /etc/gemrc && \
-    gem install \
-        jekyll \
-        minitest `# So that Bundler needn't install` \
-        pygments.rb \
-        specific_install && \
-    gem specific_install https://github.com/cs50/jekyll-theme-cs50 develop && \
-    gem cleanup
+# # Install Ruby 3.3.x
+# # https://www.ruby-lang.org/en/downloads/
+# # https://bugs.ruby-lang.org/issues/20085#note-5
+# RUN apt update && \
+#     apt install --no-install-recommends --no-install-suggests --yes \
+#         autoconf \
+#         libyaml-dev && \
+#     apt clean && \
+#     rm --force --recursive /var/lib/apt/lists/* && \
+#     cd /tmp && \
+#     curl https://cache.ruby-lang.org/pub/ruby/3.3/ruby-3.3.3.tar.gz --output ruby-3.3.3.tar.gz && \
+#     tar xzf ruby-3.3.3.tar.gz && \
+#     rm --force ruby-3.3.3.tar.gz && \
+#     cd ruby-3.3.3 && \
+#     if [ "$BUILDARCH" = "arm64" ]; then ASFLAGS=-mbranch-protection=pac-ret; else ASFLAGS=; fi && \
+#     ASFLAGS=${ASFLAGS} CFLAGS=-Os ./configure --disable-install-doc --enable-load-relative && \
+#     make && \
+#     make install && \
+#     cd .. && \
+#     rm --force --recursive ruby-3.3.3
+
+
+# # Install Ruby packages
+# RUN echo "gem: --no-document" > /etc/gemrc && \
+#     gem install \
+#         jekyll \
+#         minitest `# So that Bundler needn't install` \
+#         pygments.rb \
+#         specific_install && \
+#     gem specific_install https://github.com/cs50/jekyll-theme-cs50 develop && \
+#     gem cleanup
 
 
 # Install SQLite 3.4x
@@ -127,7 +140,7 @@ RUN cd /tmp && \
 
 # Final stage
 FROM ubuntu:24.04
-LABEL maintainer="sysadmins@cs50.harvard.edu"
+LABEL maintainer="karlo.vizec@skole.hr"
 ARG DEBIAN_FRONTEND=noninteractive
 
 
@@ -148,22 +161,22 @@ RUN apt update && \
         apt-utils \
         locales && \
     locale-gen \
-        en_US.utf8 \
-        zh_CN.utf8 \
-        zh_TW.utf8 \
-        fr_FR.utf8 \
-        de_DE.utf8 \
-        it_IT.utf8 \
-        es_ES.utf8 \
-        ja_JP.utf8 \
-        ko_KR.utf8 \
-        ru_RU.utf8 \
-        pt_BR.utf8 \
-        tr_TR.utf8 \
-        pl_PL.utf8 \
-        cs_CZ.utf8 \
-        hu_HU.utf8 \
-        bg_BG.UTF-8
+        en_US.utf8
+        # zh_CN.utf8 \
+        # zh_TW.utf8 \
+        # fr_FR.utf8 \
+        # de_DE.utf8 \
+        # it_IT.utf8 \
+        # es_ES.utf8 \
+        # ja_JP.utf8 \
+        # ko_KR.utf8 \
+        # ru_RU.utf8 \
+        # pt_BR.utf8 \
+        # tr_TR.utf8 \
+        # pl_PL.utf8 \
+        # cs_CZ.utf8 \
+        # hu_HU.utf8 \
+        # bg_BG.UTF-8
 ENV LANG=C.UTF-8
 
 
@@ -215,11 +228,11 @@ RUN apt update && \
     apt clean
 
 
-# Install CS50 library
-RUN curl https://packagecloud.io/install/repositories/cs50/repo/script.deb.sh | bash && \
-    apt update && \
-    apt install --yes \
-        libcs50
+# # Install CS50 library
+# RUN curl https://packagecloud.io/install/repositories/cs50/repo/script.deb.sh | bash && \
+#     apt update && \
+#     apt install --yes \
+#         libcs50
 
 
 # Install Docker CLI
@@ -244,18 +257,18 @@ RUN apt update && \
 RUN pip3 install --no-cache-dir \
         autopep8 \
         cachelib \
-        "check50<4" \
-        cli50 \
+        # "check50<4" \
+        # cli50 \
         compare50 \
-        cs50 \
+        # cs50 \
         Flask \
         Flask-Session \
-        help50 \
+        # help50 \
         pytest \
-        render50 \
-        setuptools \
-        "style50>2.10.0" \
-        "submit50<4"
+        # render50 \
+        setuptools
+        # "style50>2.10.0" \
+        # "submit50<4"
 
 
 # Copy files to image
@@ -276,7 +289,7 @@ RUN useradd --home-dir /home/ubuntu --shell /bin/bash ubuntu && \
     umask 0077 && \
     mkdir --parents /home/ubuntu && \
     chown --recursive ubuntu:ubuntu /home/ubuntu && \
-    echo "\n# CS50 CLI" >> /etc/sudoers && \
+    echo "\n# Primijenjena Informatika Codespaces" >> /etc/sudoers && \
     echo "ubuntu ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
     echo "Defaults umask_override" >> /etc/sudoers && \
     echo "Defaults umask=0022" >> /etc/sudoers && \
