@@ -42,6 +42,10 @@ if [ "$(whoami)" != "root" ]; then
     # Java
     export JAVA_HOME="/opt/jdk"
 
+    # Rust
+    export RUSTUP_HOME="/opt/rustup"
+    export CARGO_HOME="/opt/cargo"
+    
     # Make
     export CC="clang"
     export CFLAGS="-ferror-limit=1 -gdwarf-4 -ggdb3 -O0 -std=c11 -Wall -Werror -Wextra -Wno-gnu-folding-constant -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wshadow"

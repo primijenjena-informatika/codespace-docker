@@ -1,4 +1,4 @@
-IMAGE := cs50/cli
+IMAGE := primijenjenainformatika/codespace
 
 .PHONY: default
 default: run
